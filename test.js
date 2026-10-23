@@ -1,4 +1,4 @@
-const BASE = "http://localhost:3110";
+const BASE = "http://[::1]:3110";
 
 document.getElementById("test").addEventListener("click", async () => {
   const r = document.getElementById("r");
