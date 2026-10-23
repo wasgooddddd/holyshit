@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Xeno localhost:3110 CORS self-test</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="panel">
+    <p class="eyebrow">LOCALHOST DIAGNOSTIC</p>
+    <h1>Xeno CORS self-test</h1>
+    <p class="intro">
+      Checks whether the local endpoint responds to a simple GET request and
+      whether this page can read the response. This test does not send a payload
+      or issue a POST request.
+    </p>
+
+    <div class="details">
+      <div><span>Endpoint</span><code id="endpoint">http://localhost:3110/o</code></div>
+      <div><span>Page origin</span><code id="origin">Loading…</code></div>
+    </div>
+
+    <button id="runButton" type="button">Run connectivity test</button>
+    <section id="result" class="result" role="status" aria-live="polite">
+      Ready to test.
+    </section>
+    <p class="note">
+      Run this page only when you are authorized to test the local service.
+      A failed request can mean the service is stopped, the endpoint is
+      unavailable, or the browser blocked access because of CORS.
+    </p>
+  </main>
+</body>
+</html>
