@@ -10,7 +10,7 @@ document.getElementById("test").addEventListener("click", async () => {
       headers: {
         "Content-Type": "text/plain"
       },
-      body: "my niga: " + location.origin
+      body: "hello from origin: " + location.origin
     });
 
     r.textContent = "POST response: HTTP " + res.status;
