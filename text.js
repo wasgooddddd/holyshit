@@ -10,7 +10,7 @@ document.getElementById("test").addEventListener("click", async () => {
       headers: {
         "Content-Type": "text/plain"
       },
-      body: "CORS self-test from origin: " + location.origin
+      body: "my niga: " + location.origin
     });
 
     r.textContent = "POST response: HTTP " + res.status;
